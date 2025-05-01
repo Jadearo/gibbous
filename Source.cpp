@@ -24,7 +24,7 @@
 #include "nuklear.h"
 #include "nuklear_glfw_gl3.h"
 #include <ChString.h>
-
+#include <string>
 const char* vertexShaderSource = "#version 330 core\n" //works with openGL 3.3 core profile
 "layout (location = 0) in vec3 aPos;\n"
 "uniform mat4 transform;\n"	//location for transform matrix to be loade
@@ -147,6 +147,22 @@ std::vector<GLfloat> bulkGenChunks(GLint xdist, GLint ydist, GLint zdist)
 	return vertices;
 }
 
+bool tryParseInt(const std::string& str, int& outValue) {
+	try {
+		size_t pos;
+		outValue = std::stoi(str, &pos);
+
+		// Check that the entire string was parsed
+		return pos == str.length();
+	}
+	catch (const std::invalid_argument&) {
+		return false;
+	}
+	catch (const std::out_of_range&) {
+		return false;
+	}
+}
+
 int main()
 {
 	
@@ -175,6 +191,9 @@ int main()
 	std::string yVal = "1";
 	std::string zVal = "1";
 	bool menuOpen = true;
+	char userInput[128] = "480";
+	int intUserInput = 480;
+	bool failedParse = false;
 	while (menuOpen)
 	{
 		glfwPollEvents();		//processes events while the window is not closed, when this finishes the program terminates
@@ -185,15 +204,26 @@ int main()
 
 			nk_layout_row_dynamic(nuklearMenuWindow, 35, 4);	//defines layout
 			if (nk_button_label(nuklearMenuWindow, "Test Button")) {	//creates the button, true if clicked
-				std::cout << "\nThe button was pressed";
+				std::cout << userInput;
 			}
 			nk_layout_row_dynamic(nuklearMenuWindow, 35, 4);
 
 			// the second button
 			nk_layout_row_dynamic(nuklearMenuWindow, 25, 1); // creates another row, 1 button per line
 			if (nk_button_label(nuklearMenuWindow, "Start")) {
-				std::cout << "\nbutton 2 pressed";
+				if (tryParseInt(userInput, intUserInput))
+				{
 				menuOpen = false;	//flag closes the menu
+				std::cout << intUserInput;
+				}
+				else
+				{
+					failedParse = true;
+				}
+			}
+			if (failedParse)
+			{
+				nk_label(nuklearMenuWindow, "ERROR! INVALID RESOLUTION", NK_TEXT_CENTERED);
 			}
 
 			// slider codeS
@@ -233,7 +263,14 @@ int main()
 			nk_layout_row_dynamic(nuklearMenuWindow, 25, 2); // Creates a row with 1 element per line 
 			nk_label(nuklearMenuWindow, "Chunk distance in z-direction:", NK_TEXT_CENTERED);
 			nk_label(nuklearMenuWindow, zVal.c_str(), NK_TEXT_LEFT);
+			
+				nk_layout_row_dynamic(nuklearMenuWindow, 30, 1);
 
+				nk_label(nuklearMenuWindow, "Enter some text:", NK_TEXT_LEFT);
+
+				nk_edit_string_zero_terminated(nuklearMenuWindow,NK_EDIT_FIELD | NK_EDIT_CLIPBOARD,
+					userInput, 128, nk_filter_default);
+			
 
 			nk_end(nuklearMenuWindow);
 		}
@@ -253,7 +290,8 @@ int main()
 		zdist = std::abs(zdist);
 		//makes any negative values positive to prevent crash
 	}
-
+	glViewport(0, 0, (intUserInput*16)/9, intUserInput);
+	glfwSetWindowSize( window, (intUserInput * 16) / 9, intUserInput);
 	const GLuint noOfChunks = xdist * ydist * zdist;
 	std::vector<GLuint> indices = genIndices(noOfChunks);			//generates indices at a chunk level
 	std::vector<GLfloat> vertices = bulkGenChunks(xdist,ydist,zdist);
