@@ -23,6 +23,7 @@
 #include <array>
 #include "nuklear.h"
 #include "nuklear_glfw_gl3.h"
+#include <ChString.h>
 
 const char* vertexShaderSource = "#version 330 core\n" //works with openGL 3.3 core profile
 "layout (location = 0) in vec3 aPos;\n"
@@ -159,16 +160,20 @@ int main()
 	gladLoadGL();					//load glad so we can use graphics drivers
 	glViewport(0, 0, 640, 360);		//specifies the viewport or the framebuffer size, this is seperate from the window size but should be made the same size
 	glfwSwapInterval(1);	//enables vsync, locks framerate to monitor refreshrate
-	GLint xdist,ydist,zdist = 1;
+	GLint xdist = 1;
+	GLint ydist = 1;
+	GLint zdist = 1;
 	//nuklear
 	struct nk_context *nuklearMenuWindow = nk_glfw3_init(window, NK_GLFW3_INSTALL_CALLBACKS);	//applies a menu to GLFW window
 	//INSTALL_CALLBACKS makes the struct handle all userinput
 	struct nk_font_atlas* atlas;
 	nk_glfw3_font_stash_begin(&atlas);	//enables the font
 	nk_glfw3_font_stash_end();
-
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	std::string xVal = "1";
+	std::string yVal = "1";
+	std::string zVal = "1";
 	bool menuOpen = true;
 	while (menuOpen)
 	{
@@ -182,6 +187,7 @@ int main()
 			if (nk_button_label(nuklearMenuWindow, "Test Button")) {	//creates the button, true if clicked
 				std::cout << "\nThe button was pressed";
 			}
+			nk_layout_row_dynamic(nuklearMenuWindow, 35, 4);
 
 			// the second button
 			nk_layout_row_dynamic(nuklearMenuWindow, 25, 1); // creates another row, 1 button per line
@@ -192,23 +198,41 @@ int main()
 
 			// slider codeS
 			nk_layout_row_dynamic(nuklearMenuWindow, 25, 1); // Creates a row with 1 element per line
-			static GLint slider_xvalue = 50; //initial slider position
-			if (nk_slider_int(nuklearMenuWindow, 0, &slider_xvalue, 100, 1)) {
-				std::cout << "Slider X Value: " << slider_xvalue << "\n";
-				xdist = slider_xvalue;
+			static GLint slider_Xvalue = 1; //initial slider position
+			if (nk_slider_int(nuklearMenuWindow, 0, &slider_Xvalue, 100, 1)) {
+				std::cout << "Slider X Value: " << slider_Xvalue << "\n";
+				xdist = slider_Xvalue;
+				char buffer[20];
+				sprintf(buffer, "%d", slider_Xvalue);
+				xVal=buffer;
 			}
-			nk_layout_row_dynamic(nuklearMenuWindow, 25, 1); // Creates a row with 1 element per line
-			static GLint slider_Yvalue = 50; //initial slider position
+			nk_layout_row_dynamic(nuklearMenuWindow, 25, 2); // Creates a row with 1 element per line 
+			nk_label(nuklearMenuWindow, "Chunk distance in x-direction:", NK_TEXT_CENTERED);
+			nk_label(nuklearMenuWindow, xVal.c_str(), NK_TEXT_LEFT);
+			nk_layout_row_dynamic(nuklearMenuWindow, 25, 1);
+			static GLint slider_Yvalue = 1; //initial slider position
 			if (nk_slider_int(nuklearMenuWindow, 0, &slider_Yvalue, 100, 1)) {
 				std::cout << "Slider Y Value: " << slider_Yvalue << "\n";
 				ydist = slider_Yvalue;
+				char buffer[20];
+				sprintf(buffer, "%d", slider_Yvalue);
+				yVal = buffer;
 			}
+			nk_layout_row_dynamic(nuklearMenuWindow, 25, 2); // Creates a row with 1 element per line 
+			nk_label(nuklearMenuWindow, "Chunk distance in y-direction:", NK_TEXT_CENTERED);
+			nk_label(nuklearMenuWindow, yVal.c_str(), NK_TEXT_LEFT);
 			nk_layout_row_dynamic(nuklearMenuWindow, 25, 1); // Creates a row with 1 element per line
-			static GLint slider_Zvalue = 50; //initial slider position
+			static GLint slider_Zvalue = 1; //initial slider position
 			if (nk_slider_int(nuklearMenuWindow, 0, &slider_Zvalue, 100, 1)) {
 				std::cout << "Slider Z Value: " << slider_Zvalue << "\n";
 				zdist = slider_Zvalue;
+				char buffer[20];
+				sprintf(buffer, "%d", slider_Zvalue);
+				zVal = buffer;
 			}
+			nk_layout_row_dynamic(nuklearMenuWindow, 25, 2); // Creates a row with 1 element per line 
+			nk_label(nuklearMenuWindow, "Chunk distance in z-direction:", NK_TEXT_CENTERED);
+			nk_label(nuklearMenuWindow, zVal.c_str(), NK_TEXT_LEFT);
 
 
 			nk_end(nuklearMenuWindow);
