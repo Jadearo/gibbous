@@ -1,5 +1,4 @@
 #define _CRT_SECURE_NO_WARNINGS
-
 #include<iostream>
 #include<glad/glad.h>
 #include<GLFW/glfw3.h>
@@ -41,19 +40,19 @@ const char* fragmentShaderSource = "#version 330 core\n"
 "   FragColor = vec4(1.0, 1.0, 1.0, 1.0);\n"
 "}\0";
 
-std::array<GLfloat, 24> getVertices(GLfloat x, GLfloat y, GLfloat z) {
+std::array<GLfloat, 24> getVertices(GLfloat x, GLfloat y, GLfloat z) {	//generates the vertices for a voxel
 	return {
-		x,y,z,				//0
-		x,y - 1,z,			//1
-		x + 1,y,z,			//2
-		x + 1,y - 1,z,		//3	
-		x,y,z - 1,			//4
-		x,y - 1,z - 1,		//5
-		x + 1,y,z - 1,		//6
-		x + 1,y - 1,z - 1,	//7
+		x,y,z,				//vertex 0
+		x,y - 1,z,			//vertex 1
+		x + 1,y,z,			//vertex 2
+		x + 1,y - 1,z,		//vertex 3	
+		x,y,z - 1,			//vertex 4
+		x,y - 1,z - 1,		//vertex 5
+		x + 1,y,z - 1,		//vertex 6
+		x + 1,y - 1,z - 1,	//vertex 7
 	};
 }
-std::vector<GLfloat> genChunk(GLint x,GLint y,GLint z)
+std::vector<GLfloat> genChunk(GLint x,GLint y,GLint z)	//recursively calls getvertices to load the data for a whole chunk
 {
 	const GLint chunkLength = 8;		//the length of a chunk will always be 8
 	GLfloat offset = 0;
@@ -72,13 +71,6 @@ std::vector<GLfloat> genChunk(GLint x,GLint y,GLint z)
 			{
 				std::array<GLfloat, 24> temp = getVertices(i, -o, p); //use static array for small data for speed
 				vertices.insert(vertices.end(), temp.begin(), temp.end());	//<vector> allows for insercion of arrays
-				/*std::cout << "vertices loop number " << offset / 24 << " finished\n";
-				for (float n = offset; n < offset +24; n++)
-				{
-					std::cout << "vertex no. " << n << " : " << vertices[n] << "\n";
-				}
-				offset += 24; */
-				
 
 			}
 
@@ -87,11 +79,11 @@ std::vector<GLfloat> genChunk(GLint x,GLint y,GLint z)
 	return vertices;	//this returns the vertices for all the voxels in the chunk
 }
 
-std::vector<GLuint> genIndices(GLuint total)
+std::vector<GLuint> genIndices(GLuint total)	//generates the indices for each chunk
 {
-	const int chunkLength = 8;
-	std::vector<GLuint> indices;
-	int offset = 0;
+	const int chunkLength = 8;	//the length of a chunk in each direction
+	std::vector<GLuint> indices;	//stores indices
+	int offset = 0;		//offsets the values of the indcies
 	int indexoffset = 0;
 	for (int n = 0; n < chunkLength*chunkLength*chunkLength*total; n++)
 	{
@@ -117,29 +109,26 @@ std::vector<GLuint> genIndices(GLuint total)
 			offset + 7,  offset + 6,  offset + 2
 		
 		};
-		indices.insert(indices.end(), std::begin(currentindices), std::end(currentindices));
+		indices.insert(indices.end(), std::begin(currentindices), std::end(currentindices));	
+		//inset values into the vector
 		offset += 8;	
-		/*std::cout << "loop number " << offset / 8 << " finished\n";
-		for (float n = offset*4.5-36; n < offset * 4.5; n++)
-		{
-			std::cout<<"no. " << n << " : " << indices[n] << "\n";
-		}*/
-		//increase offset to reference vertices for next voxel in chunk
+
 	}
 		return indices;
 }
 
-std::vector<GLfloat> bulkGenChunks(GLint xdist, GLint ydist, GLint zdist)
+std::vector<GLfloat> bulkGenChunks(GLint xdist, GLint ydist, GLint zdist)	
+//function generates multiple chunks at once calling the genChunk() function recursively
 {
-	std::vector<GLfloat> vertices, tempVertices;
-	for (int x = 0; x < xdist; x++)
+	std::vector<GLfloat> vertices, tempVertices;	//declare 2 vectors
+	for (int x = 0; x < xdist; x++)					//iterate through every x,y,z
 	{
 		for (int y = 0; y < ydist; y++)
 		{
-			for (int z = 0; z < zdist; z++)
+			for (int z = 0; z < zdist; z++)	
 			{
 				tempVertices = genChunk(x, y, z);	//Temporarily get vertcies for a chunk then insert each
-				vertices.insert(vertices.end(), std::begin(tempVertices), tempVertices.end());
+				vertices.insert(vertices.end(), std::begin(tempVertices), tempVertices.end());	//insert into the vector
 				std::cout << "the function looped   (" << x << "," << y << "," << z<<")\n";	//shows location the iteration creates the chunk
 			}
 		}
@@ -147,86 +136,83 @@ std::vector<GLfloat> bulkGenChunks(GLint xdist, GLint ydist, GLint zdist)
 	return vertices;
 }
 
-bool tryParseInt(const std::string& str, int& outValue) {
+bool tryParseInt(const std::string& stringInput, int& outValue) {	//tryparse function to convert strings to intagers
 	try {
-		size_t pos;
-		outValue = std::stoi(str, &pos);
-
-		// Check that the entire string was parsed
-		return pos == str.length();
+		size_t stringSize;		//stores the size of the parsed string
+		outValue = std::stoi(stringInput, &stringSize);	//attempts to convert string
+		return stringSize == stringInput.size() ;		//returns true if the string and parsed string are the same size
 	}
-	catch (const std::invalid_argument&) {
+	catch (const std::invalid_argument&) {	//for invalid input
 		return false;
 	}
-	catch (const std::out_of_range&) {
+	catch (const std::out_of_range&) {	//for values too large
 		return false;
 	}
 }
 
 int main()
-{
-	
+{	
 	glfwInit();	//loads glfw
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);		//sets max version of openGL to 3
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);		//Min ver to 3 as well
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);	//Specifies we are using the core profile, we are not using the compatibility libraries for this project
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);	
+	//Specifies we are using the core profile, we are not using the compatibility libraries for this project
 
-	GLFWwindow* window = glfwCreateWindow(640, 360, "Main", NULL, NULL); //creates a 640x480 window with name "Main"
+	GLFWwindow* window = glfwCreateWindow(640, 480, "Main", NULL, NULL); //creates a 640x480 window with name "Main"
 	glfwMakeContextCurrent(window);
 	gladLoadGL();					//load glad so we can use graphics drivers
-	glViewport(0, 0, 640, 360);		//specifies the viewport or the framebuffer size, this is seperate from the window size but should be made the same size
+	glViewport(0, 0, 640, 480);		
+	//specifies the viewport or the framebuffer size, this is seperate from the window size but should be made the same size
 	glfwSwapInterval(1);	//enables vsync, locks framerate to monitor refreshrate
-	GLint xdist = 1;
+	GLint xdist = 1;	//inital values for the x,y,z directions
 	GLint ydist = 1;
 	GLint zdist = 1;
-	//nuklear
+	//nuklear code for UI below
 	struct nk_context *nuklearMenuWindow = nk_glfw3_init(window, NK_GLFW3_INSTALL_CALLBACKS);	//applies a menu to GLFW window
 	//INSTALL_CALLBACKS makes the struct handle all userinput
-	struct nk_font_atlas* atlas;
+	struct nk_font_atlas* atlas;		//create pointer to the font atlas so it can be used
 	nk_glfw3_font_stash_begin(&atlas);	//enables the font
 	nk_glfw3_font_stash_end();
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-	std::string xVal = "1";
+	std::string xVal = "1";		//initial values for the text displaying the values of the sliders representing the xdist,ydist and zdist
 	std::string yVal = "1";
 	std::string zVal = "1";
-	bool menuOpen = true;
-	char userInput[128] = "480";
+	bool menuOpen = true;		//creates flag, closes window when set to false
+	char userInput[128] = "480";	//inital resolution value in textbox, can be changed by user
 	int intUserInput = 480;
-	bool failedParse = false;
+	bool failedParse = false;		//sets the flag for a failed converstion to int to false, when set to true the error text displays
 	while (menuOpen)
 	{
 		glfwPollEvents();		//processes events while the window is not closed, when this finishes the program terminates
 
-		nk_glfw3_new_frame();
-		if (nk_begin(nuklearMenuWindow, "Nuklear Window", nk_rect(0, 0, 500, 500),
+		nk_glfw3_new_frame();	//code runs every frame the window is open
+		if (nk_begin(nuklearMenuWindow, "Nuklear Window", nk_rect(0, 0, 500, 500),	//creates GUI window
 			NK_WINDOW_BORDER | NK_WINDOW_TITLE | NK_WINDOW_MINIMIZABLE)) {
 
-			nk_layout_row_dynamic(nuklearMenuWindow, 35, 4);	//defines layout
-			if (nk_button_label(nuklearMenuWindow, "Test Button")) {	//creates the button, true if clicked
+			nk_layout_row_dynamic(nuklearMenuWindow, 35, 4);	//defines layout for UI elements
+			if (nk_button_label(nuklearMenuWindow, "Test Button")) {	//creates the button, returns true if clicked and runs embedded code
 				std::cout << userInput;
 			}
-			nk_layout_row_dynamic(nuklearMenuWindow, 35, 4);
+			nk_layout_row_dynamic(nuklearMenuWindow, 35, 4);	//changes the layout again
 
 			// the second button
 			nk_layout_row_dynamic(nuklearMenuWindow, 25, 1); // creates another row, 1 button per line
-			if (nk_button_label(nuklearMenuWindow, "Start")) {
-				if (tryParseInt(userInput, intUserInput))
+			if (nk_button_label(nuklearMenuWindow, "Start")) {		//creates start button
+				if (tryParseInt(userInput, intUserInput))			//converts to int using my function, if sucessful program starts, otherwise error is shown.
 				{
 				menuOpen = false;	//flag closes the menu
-				std::cout << intUserInput;
 				}
 				else
 				{
-					failedParse = true;
+				failedParse = true;	//flag returns an error
 				}
 			}
-			if (failedParse)
+			if (failedParse)		//when the flag is set to true, error text displays
 			{
-				nk_label(nuklearMenuWindow, "ERROR! INVALID RESOLUTION", NK_TEXT_CENTERED);
+				nk_label(nuklearMenuWindow, "ERROR! INVALID RESOLUTION", NK_TEXT_CENTERED);	//code for creating error text
 			}
 
-			// slider codeS
+			// slider code
 			nk_layout_row_dynamic(nuklearMenuWindow, 25, 1); // Creates a row with 1 element per line
 			static GLint slider_Xvalue = 1; //initial slider position
 			if (nk_slider_int(nuklearMenuWindow, 0, &slider_Xvalue, 100, 1)) {
@@ -236,7 +222,7 @@ int main()
 				sprintf(buffer, "%d", slider_Xvalue);
 				xVal=buffer;
 			}
-			nk_layout_row_dynamic(nuklearMenuWindow, 25, 2); // Creates a row with 1 element per line 
+			nk_layout_row_dynamic(nuklearMenuWindow, 25, 2); // Creates a row with 2 elements per line 
 			nk_label(nuklearMenuWindow, "Chunk distance in x-direction:", NK_TEXT_CENTERED);
 			nk_label(nuklearMenuWindow, xVal.c_str(), NK_TEXT_LEFT);
 			nk_layout_row_dynamic(nuklearMenuWindow, 25, 1);
@@ -248,7 +234,7 @@ int main()
 				sprintf(buffer, "%d", slider_Yvalue);
 				yVal = buffer;
 			}
-			nk_layout_row_dynamic(nuklearMenuWindow, 25, 2); // Creates a row with 1 element per line 
+			nk_layout_row_dynamic(nuklearMenuWindow, 25, 2); // Creates a row with 2 elements per line 
 			nk_label(nuklearMenuWindow, "Chunk distance in y-direction:", NK_TEXT_CENTERED);
 			nk_label(nuklearMenuWindow, yVal.c_str(), NK_TEXT_LEFT);
 			nk_layout_row_dynamic(nuklearMenuWindow, 25, 1); // Creates a row with 1 element per line
@@ -260,7 +246,7 @@ int main()
 				sprintf(buffer, "%d", slider_Zvalue);
 				zVal = buffer;
 			}
-			nk_layout_row_dynamic(nuklearMenuWindow, 25, 2); // Creates a row with 1 element per line 
+			nk_layout_row_dynamic(nuklearMenuWindow, 25, 2); // Creates a row with 2 elements per line 
 			nk_label(nuklearMenuWindow, "Chunk distance in z-direction:", NK_TEXT_CENTERED);
 			nk_label(nuklearMenuWindow, zVal.c_str(), NK_TEXT_LEFT);
 			
@@ -269,7 +255,7 @@ int main()
 				nk_label(nuklearMenuWindow, "Enter some text:", NK_TEXT_LEFT);
 
 				nk_edit_string_zero_terminated(nuklearMenuWindow,NK_EDIT_FIELD | NK_EDIT_CLIPBOARD,
-					userInput, 128, nk_filter_default);
+					userInput, 128, nk_filter_default);	//craetes a text-box with the parameters with attributes
 			
 
 			nk_end(nuklearMenuWindow);
@@ -286,7 +272,7 @@ int main()
 	if (xdist < 0 || ydist < 0 || zdist < 0)
 	{
 		xdist = std::abs(xdist);
-		ydist = std::abs(ydist);
+		ydist = std::abs(ydist);X
 		zdist = std::abs(zdist);
 		//makes any negative values positive to prevent crash
 	}
@@ -296,28 +282,15 @@ int main()
 	std::vector<GLuint> indices = genIndices(noOfChunks);			//generates indices at a chunk level
 	std::vector<GLfloat> vertices = bulkGenChunks(xdist,ydist,zdist);
 
-	std::cout << "total " << chunkLength * chunkLength * chunkLength * noOfChunks << " voxels\n";
-
-
+	std::cout << "total " << chunkLength * chunkLength * chunkLength * noOfChunks << " voxels\n";		
 	std::cout << "\nsize of vertices:" << vertices.size()/3 << "\n size of indices" << indices.size();
-
-	/*for (int n = 0; n<vertices.size(); n = n + 3)
-	{
-		std::cout << "(" << vertices[n] << "," << vertices[n + 1] << "," << vertices[n + 2] << ")\n";
-	}*/
-	
-	
-		
-		
-	//indices for a face with 4 verticies
-
-
+	//logs to the console the size of the vertices and the number of voxels
 
 	GLuint vertShader = glCreateShader(GL_VERTEX_SHADER);	//creates the reference for the vertex shader
 	glShaderSource(vertShader, 1, &vertexShaderSource, NULL);	//gives the reference the data of the actual shader
 	glCompileShader(vertShader);	//compiles the vertex shader, is now ready to be attached to the context
 
-	GLuint fragShader = glCreateShader(GL_FRAGMENT_SHADER);  
+	GLuint fragShader = glCreateShader(GL_FRAGMENT_SHADER);  //same process as before
 	glShaderSource(fragShader, 1, &fragmentShaderSource, NULL);
 	glCompileShader(fragShader);
 
@@ -353,7 +326,7 @@ int main()
 
 	int refreshRate = mode->refreshRate;
 	double lastTime = glfwGetTime();
-
+	//transformation and movement variables
 	GLfloat x = 0;
 	GLfloat transX = 0;
 	GLfloat transY = 0;
@@ -362,7 +335,7 @@ int main()
 	GLfloat x_pos = 0;
 	GLfloat y_pos = 0;
 	const GLfloat increment = 10;
-	GLdouble cursorx, cursory;
+	GLdouble cursorx, cursory;		//cursor position
 	glm::mat4 identityMat(1.0f);	//creates 4x4 matrix transform, input 1.0f makes it an identity matrix
 	glm::mat4 perspectiveMat = glm::perspective(glm::radians(45.0f), 16.0f / 9.0f, 0.1f, 1000.0f);
 	//std::cout << "drawing function reached";
@@ -370,10 +343,10 @@ int main()
 	glEnable(GL_DEPTH_TEST);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	while (!glfwWindowShouldClose(window))
+	while (!glfwWindowShouldClose(window))	//loops every frame simulation is open
 	{
 		glfwGetCursorPos(window, &cursorx, &cursory);
-		std::cout << "go " << x_pos << " , " << y_pos << " , " << z_pos<<"\n";
+		std::cout << "position " << x_pos << " , " << y_pos << " , " << z_pos<<"\n";
 		glfwPollEvents();
 		glfwSwapBuffers(window);			//displays the drawn image
 		glUseProgram(shaderProgram);			//multiples shader programs may be used, so this specifies which one
@@ -421,31 +394,34 @@ int main()
 		cursorx = cursorx / 1000;
 		cursory = cursory / 1000;
 
-		glm::vec3 transformVec(0.0f, 0.0f, 0.0f);	//creates 3d vector transform, parameters are in the x,y,z directions
-		/*std::cout << "(";
-		std::cout << x_pos;
-		std::cout << ",";
-		std::cout << z_pos;
-		std::cout << ")\n";*/
+		glm::vec3 transformVec(0.0f, 0.0f, 0.0f);	
+		//creates 3d vector transform, parameters are in the x,y,z directions
 		glm::vec3 rotationVec(1.0f, 0.0f, 0.0f);
 
-		glm::mat4 transformMat = glm::translate(identityMat, transformVec); //creates a new matrix, tranform, by putting the values from the vector in the apropiate location in the matrix to perform a translation
+		glm::mat4 transformMat = glm::translate(identityMat, transformVec);
+		//creates a new matrix, tranform, by putting the values from the vector in the apropiate location in the matrix to perform a translation
 		//transformMat = glm::rotate(transformMat, rotation, rotationVec);
 
 		glm::vec3 cameraPosition(x_pos, y_pos, z_pos); //position of the camera
-		glm::vec3 cameraTarget(x_pos - cursorx, -cursory +y_pos, z_pos+1);	//points the camera 1 unit infront itself and is offset by the cursor
+		glm::vec3 cameraTarget(x_pos - cursorx, -cursory +y_pos, z_pos+1);	
+		//points the camera 1 unit infront itself and is offset by the cursor
 		glm::vec3 upDirection(0.0f, 1.0f, 0.0f);	//take the y-direction as up
 
 		glm::mat4 viewMatrix = glm::lookAt(cameraPosition, cameraTarget, upDirection);
 
 		//transform matrix
-		GLuint transformLoc = glGetUniformLocation(shaderProgram, "transform");	//retrives the location of the transformation function in the shader
-		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transformMat));	//sends all the float values of the matrix to the transform function in the shader
+		GLuint transformLoc = glGetUniformLocation(shaderProgram, "transform");	
+		//retrives the location of the transformation function in the shader
+		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transformMat));	
+		//sends all the float values of the matrix to the transform function in the shader
 		//perspective matrix
-		GLuint perspectiveLoc = glGetUniformLocation(shaderProgram, "perspective");	//retrives the location of the perspective function in the shader
-		glUniformMatrix4fv(perspectiveLoc, 1, GL_FALSE, glm::value_ptr(perspectiveMat));	//sends all the float values of the matrix to the perspective function in the shader
+		GLuint perspectiveLoc = glGetUniformLocation(shaderProgram, "perspective");	
+		//retrives the location of the perspective function in the shader
+		glUniformMatrix4fv(perspectiveLoc, 1, GL_FALSE, glm::value_ptr(perspectiveMat));	
+		//sends all the float values of the matrix to the perspective function in the shader
 		//view matrix
-		GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");	//location of the view matrix functionality in the vertex shader
+		GLuint viewLoc = glGetUniformLocation(shaderProgram, "view");	
+		//location of the view matrix functionality in the vertex shader
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
 		
 
